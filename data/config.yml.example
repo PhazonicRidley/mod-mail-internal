@@ -1,0 +1,9 @@
+token : your token
+
+# Uncomment one db line. Top is an example for localhost, bottom is with docker
+# db : postgres://username:password@localhost:5432
+# db : postgres://mmi:pass@db:5432 # be sure to match your credentials in the compose file 
+
+activity: your complaints
+
+prefix: )
