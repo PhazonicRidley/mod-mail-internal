@@ -23,13 +23,13 @@ class Topic(commands.GroupCog):
     @checks.topic_whitelist()
     @app_commands.command(name="create")
     @app_commands.describe(
-        topic_name="The name of your topic",
+        topic_title="The name of your topic",
         description_message="The message describing the topic",
     )
     async def create_topic(
         self,
         interaction: discord.Interaction,
-        topic_name: str,
+        topic_title: str,
         description_message: str,
     ):
         """Creates a new topic"""
@@ -41,7 +41,7 @@ class Topic(commands.GroupCog):
         )
         topic_id = interaction.id
         thread, first_post = await channel.create_thread(
-            name=topic_name,
+            name=topic_title,
             content=description_message,
             view=TopicView(self.bot, interaction.user.id, topic_id),
         )
@@ -54,13 +54,15 @@ class Topic(commands.GroupCog):
                 """INSERT INTO topics (
                               id, 
                               guild_id, 
+                              title,
                               message, 
                               priority_level, 
                               message_id, 
                               author_id, 
-                              thread_id) VALUES ($1, $2, $3, $4, $5, $6, $7)""",
+                              thread_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)""",
                 topic_id,
                 interaction.guild_id,
+                topic_title,
                 description_message,
                 1,
                 first_post.id,

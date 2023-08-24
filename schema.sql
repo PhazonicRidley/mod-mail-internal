@@ -2,6 +2,7 @@ CREATE TABLE IF NOT EXISTS topics
 (
     id BIGINT PRIMARY KEY,
     guild_id BIGINT NOT NULL,
+    title TEXT NOT NULL,
     message TEXT NOT NULL,
     priority_level INT NOT NULL,
     users_in_favor BIGINT[],

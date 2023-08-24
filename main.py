@@ -8,7 +8,6 @@ from discord.ext import commands
 import yaml
 import asyncio
 from utils.common import configure_logging
-from logging import Logger
 from typing import Literal, Optional
 from utils.ui import recreate_views
 import utils.errors as errors
@@ -39,6 +38,10 @@ class MMITree(discord.app_commands.CommandTree):
                 "You don't have permission to use this command", ephemeral=True
             )
 
+        elif isinstance(error, CommandSignatureMismatch):
+            await interaction.response.send_message(
+                f"Command has a mismatched signature, run `{read_config('prefix')}sync`."
+            )
         elif isinstance(error, errors.MMIError):
             await interaction.response.send_message(error.message, ephemeral=True)
 
@@ -136,7 +139,7 @@ class ModMailInternal(commands.Bot):
                 )
                 sys.exit(-1)
 
-    async def on_command_error(self, ctx, error):
+    async def on_command_error(self, ctx: commands.Context, error):
         """Handles errors"""
         # handles errors for commands that do not exist
         if isinstance(error, commands.errors.CommandNotFound):
@@ -150,6 +153,10 @@ class ModMailInternal(commands.Bot):
                 f"An HTTP {error.original.status} error has occurred for the following reason: `{error.original.text}`"
             )
 
+        elif isinstance(error, commands.errors.NotOwner):
+            await ctx.send(
+                f"Only {self.get_user(self.owner_id).name} can run this command."
+            )
         # handles all bad command usage
         elif isinstance(
             error,
