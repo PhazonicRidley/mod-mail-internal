@@ -3,7 +3,6 @@ from discord import app_commands
 from discord.ext import commands
 from utils.common import *
 from main import ModMailInternal
-from typing import Union
 
 
 @app_commands.guild_only()
@@ -13,6 +12,8 @@ class Channel(
     name="channel",
     description="Used to manage the channel for topics",
 ):
+    """Cog for managing the topic forum channel"""
+
     def __init__(self, bot: ModMailInternal) -> None:
         self.bot = bot
         self.log = configure_logging("channel")

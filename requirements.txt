@@ -12,7 +12,6 @@ discord.py>=2.3.2
 frozenlist>=1.4.0
 idna>=3.4
 import-expression>=1.1.4
-jishaku>=2.5.1
 line-profiler>=4.1.0
 logzero>=1.7.0
 multidict>=6.0.4

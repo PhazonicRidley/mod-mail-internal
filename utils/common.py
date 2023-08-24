@@ -3,8 +3,6 @@ import os
 from logzero import setup_logger
 from logging import Logger
 from typing import TYPE_CHECKING
-import asyncpg
-import discord
 
 
 if TYPE_CHECKING:
@@ -12,6 +10,7 @@ if TYPE_CHECKING:
 
 
 def configure_logging(filename: str) -> Logger:
+    """Configure logging for main bot and each cog."""
     log_path = "data/logs/"
     if not os.path.isdir(log_path):
         os.mkdir(log_path)

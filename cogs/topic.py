@@ -5,7 +5,8 @@ from discord.ext import commands
 from utils.common import configure_logging
 from utils.ui import TopicView, edit_topic, ClosingModal
 import utils.checks as checks
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
+import asyncpg
 
 if TYPE_CHECKING:
     from main import ModMailInternal
@@ -13,14 +14,23 @@ if TYPE_CHECKING:
 
 @app_commands.guild_only()
 class Topic(commands.GroupCog):
+    """Cog for managing topics, creation, editing, and editing"""
+
     def __init__(self, bot: ModMailInternal) -> None:
         self.bot = bot
         self.log = configure_logging("topic")
 
     @checks.topic_whitelist()
     @app_commands.command(name="create")
+    @app_commands.describe(
+        topic_name="The name of your topic",
+        description_message="The message describing the topic",
+    )
     async def create_topic(
-        self, interaction: discord.Interaction, topic: str, message: str
+        self,
+        interaction: discord.Interaction,
+        topic_name: str,
+        description_message: str,
     ):
         """Creates a new topic"""
         channel = interaction.guild.get_channel(
@@ -31,13 +41,14 @@ class Topic(commands.GroupCog):
         )
         topic_id = interaction.id
         thread, first_post = await channel.create_thread(
-            name=topic,
-            content=message,
+            name=topic_name,
+            content=description_message,
             view=TopicView(self.bot, interaction.user.id, topic_id),
         )
         await first_post.pin()
         # TODO: Update priorities
         # Update database
+        con: asyncpg.Connection
         async with self.bot.db.acquire() as con:
             await con.execute(
                 """INSERT INTO topics (
@@ -50,7 +61,7 @@ class Topic(commands.GroupCog):
                               thread_id) VALUES ($1, $2, $3, $4, $5, $6, $7)""",
                 topic_id,
                 interaction.guild_id,
-                message,
+                description_message,
                 1,
                 first_post.id,
                 interaction.user.id,
@@ -66,44 +77,6 @@ class Topic(commands.GroupCog):
             ephemeral=True,
         )
 
-    async def validate_thread(
-        self, interaction: discord.Interaction, thread: discord.Thread = None
-    ) -> Optional[discord.Thread]:
-        """Validates a thread exists and is valid. If it isn't returns None. if it is, returns the thread."""
-        if not thread:
-            thread = interaction.channel
-            if not isinstance(thread, discord.Thread):
-                await interaction.response.send_message(
-                    "This can only be used inside a topic thread you created.",
-                    ephemeral=True,
-                )
-                return None
-
-        forum_id = await self.bot.db.fetchval(
-            "SELECT output_channel_id FROM settings WHERE guild_id = $1",
-            interaction.guild_id,
-        )
-        if not forum_id:
-            await interaction.response.send_message(
-                "Topic forum doesn't exist. Please have an admin make one.",
-                ephemeral=True,
-            )
-            return None
-        forum = self.bot.get_channel(forum_id)
-        if not forum:
-            return await interaction.response.send_message(
-                "Topic forum doesn't exist or was deleted. Please have an admin remake one.",
-                ephemeral=True,
-            )
-
-        if thread not in forum.threads:
-            await interaction.response.send_message(
-                "This thread is not a topic thread. Please select a valid thread",
-                ephemeral=True,
-            )
-            return None
-        return thread
-
     @checks.topic_whitelist()
     @app_commands.command(name="edit")
     @app_commands.describe(thread="The thread of the topic you want to edit.")
@@ -111,7 +84,7 @@ class Topic(commands.GroupCog):
         self, interaction: discord.Interaction, thread: discord.Thread = None
     ):
         """Edits a topic message"""
-        thread = await self.validate_thread(interaction, thread)
+        thread = await checks.validate_thread(self.bot, interaction, thread)
         if not thread:
             return
 
@@ -138,7 +111,7 @@ class Topic(commands.GroupCog):
         self, interaction: discord.Interaction, thread: discord.Thread = None
     ):
         """Closes a topic. Either a user's own topic or concludes a topic by an admin"""
-        thread = await self.validate_thread(interaction, thread)
+        thread = await checks.validate_thread(self.bot, interaction, thread)
         if not thread:
             return
 
@@ -163,7 +136,7 @@ class Topic(commands.GroupCog):
                 self.log.exception("Error")
         else:
             await interaction.response.send_message(
-                "You don't have permission to use this command, you are no the orignal poster or an administrator",
+                "You don't have permission to use this command, you are not the orignal poster or an administrator",
                 ephemeral=True,
             )
 

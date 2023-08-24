@@ -1,5 +1,4 @@
 from discord.app_commands.errors import AppCommandError, CommandInvokeError
-import discord
 from discord.app_commands import Command, ContextMenu
 
 
@@ -14,6 +13,6 @@ NoRolesError = MMIError
 NotWhitelistedError = MMIError
 
 
-class ViewError(discord.app_commands.errors.CommandInvokeError):
+class ViewError(CommandInvokeError):
     def __init__(self, command: Command | ContextMenu, e: Exception) -> None:
         super().__init__(command, e)

@@ -13,6 +13,8 @@ class Role(
     name="role",
     description="Used to manage approved roles to make topics",
 ):
+    """Cog for managing the whitelist for roles to create and interact with topics"""
+
     def __init__(self, bot: ModMailInternal) -> None:
         self.bot = bot
         self.log = configure_logging("settings")

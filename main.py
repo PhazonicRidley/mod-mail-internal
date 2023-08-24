@@ -29,6 +29,8 @@ async def create_pool():
 
 
 class MMITree(discord.app_commands.CommandTree):
+    """Custom cls for app command tree. Used primarily for error handling"""
+
     async def on_error(
         self, interaction: discord.Interaction, error: AppCommandError
     ) -> None:
@@ -105,7 +107,6 @@ class ModMailInternal(commands.Bot):
         await self.prepare_db()
         self.log.info("Schema configured")
         modules = ["channel", "topic", "role"]
-        await self.load_extension("jishaku")
         for module in modules:
             try:
                 await self.load_extension("cogs." + module)
@@ -212,6 +213,7 @@ async def sync(
     guilds: commands.Greedy[discord.Object],
     spec: Optional[Literal["~", "*", "^"]] = None,
 ) -> None:
+    """Free floating text command to allow the owner to sync bot. To be used almost never."""
     if not guilds:
         if spec == "~":
             synced = await ctx.bot.tree.sync(guild=ctx.guild)

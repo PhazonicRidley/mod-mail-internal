@@ -8,12 +8,14 @@ from discord.ui import View, Button, Modal, TextInput
 import asyncpg
 from typing import TYPE_CHECKING
 from utils.errors import ViewError
+from typing import AsyncGenerator
 
 if TYPE_CHECKING:
     from main import ModMailInternal
 
 
-async def topic_generator(bot: ModMailInternal):
+async def topic_generator(bot: ModMailInternal) -> AsyncGenerator[asyncpg.Record]:
+    """Async generator for topics"""
     for topic in await bot.db.fetch("SELECT id, author_id, message_id FROM topics"):
         yield topic
 
@@ -30,7 +32,7 @@ async def recreate_views(bot: ModMailInternal):
 
 
 class TopicView(View):
-    """Topic view"""
+    """A view to accompany a topic's message for buttons."""
 
     def __init__(self, bot: ModMailInternal, author_id: int, topic_id: int):
         super().__init__(timeout=None)
@@ -84,6 +86,7 @@ class TopicView(View):
         emoji="\U0000274c",
     )
     async def remove_priority(self, interaction: discord.Interaction, button: Button):
+        """Remove yourself from the priority list"""
         con: asyncpg.Connection
         async with self.bot.db.acquire() as con:
             users_in_favor = await con.fetchval(
@@ -113,6 +116,7 @@ class TopicView(View):
         style=ButtonStyle.primary, label="Edit", custom_id="edit", emoji="\U0001f4dd"
     )
     async def edit_message(self, interaction: discord.Interaction, button: Button):
+        """Allows editing from a button."""
         await edit_topic(self.bot, interaction, self.topic_id)
 
 
@@ -153,6 +157,8 @@ async def edit_topic(
 
 
 class MMIModal(Modal):
+    """Abstract base Modal to manage common error handling for all modals the bot used directly"""
+
     # TODO: Better error handling
     async def on_error(
         self, interaction: discord.Interaction, error: Exception
@@ -161,6 +167,8 @@ class MMIModal(Modal):
 
 
 class EditingModal(MMIModal):
+    """A Modal to manage the topic editing feature."""
+
     topic_title = TextInput(label="Topic Title", required=False)
     topic_message = TextInput(
         label="Topic Message", style=discord.TextStyle.paragraph, required=False
@@ -202,7 +210,7 @@ class EditingModal(MMIModal):
 
 
 class ClosingModal(MMIModal):
-    """UI to handle closing a topic"""
+    """A modal to handle the closing topic feature."""
 
     conclusion_text = TextInput(
         label="Closing remarks", style=discord.TextStyle.paragraph
