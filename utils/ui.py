@@ -9,6 +9,7 @@ import asyncpg
 from typing import TYPE_CHECKING
 from utils.errors import ViewError
 from typing import AsyncGenerator
+from utils.common import update_thread_order
 
 if TYPE_CHECKING:
     from main import ModMailInternal
@@ -75,6 +76,13 @@ class TopicView(View):
                 self.topic_id,
             )
 
+        channel_id = await self.bot.db.fetchval(
+            "SELECT output_channel_id FROM settings WHERE guild_id = $1",
+            interaction.guild_id,
+        )
+        channel: discord.ForumChannel = interaction.guild.get_channel(channel_id)
+        await update_thread_order(self.bot, interaction, channel)
+
         await interaction.response.send_message(
             "Increased priority for this topic.", ephemeral=True
         )
@@ -108,6 +116,12 @@ class TopicView(View):
                 self.topic_id,
             )
 
+        channel_id = await self.bot.db.fetchval(
+            "SELECT output_channel_id FROM settings WHERE guild_id = $1",
+            interaction.guild_id,
+        )
+        channel: discord.ForumChannel = interaction.guild.get_channel(channel_id)
+        await update_thread_order(self.bot, interaction, channel)
         await interaction.response.send_message(
             "Removed priority for this topic,", ephemeral=True
         )
@@ -208,6 +222,13 @@ class EditingModal(MMIModal):
         else:
             await interaction.response.send_message("Cancelled", ephemeral=True)
 
+        channel_id = await self.db.fetchval(
+            "SELECT output_channel_id FROM settings WHERE guild_id = $1",
+            interaction.guild_id,
+        )
+        channel: discord.ForumChannel = interaction.guild.get_channel(channel_id)
+        await update_thread_order(interaction.client, interaction, channel)
+
 
 class ClosingModal(MMIModal):
     """A modal to handle the closing topic feature."""
@@ -251,6 +272,13 @@ class ClosingModal(MMIModal):
         await self.topic_thread.edit(
             locked=True, archived=True, reason="Topic closed by " + self.closer
         )
+
+        channel_id = await self.db.fetchval(
+            "SELECT output_channel_id FROM settings WHERE guild_id = $1",
+            interaction.guild_id,
+        )
+        channel: discord.ForumChannel = interaction.guild.get_channel(channel_id)
+        await update_thread_order(interaction.client, interaction, channel)
 
         await self.db.execute(
             "DELETE FROM topics WHERE id = $1 AND guild_id = $2",

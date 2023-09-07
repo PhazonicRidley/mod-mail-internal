@@ -37,6 +37,7 @@ class Channel(
             channel.id,
             interaction.guild.id,
         )
+        await update_thread_order(self.bot, interaction, channel, new_channel_set=True)
         await interaction.response.send_message(
             f"Output channel set to: {channel.mention}", ephemeral=True
         )
@@ -72,7 +73,10 @@ class Channel(
                 "No channel has been set", ephemeral=True
             )
         else:
-            channel = interaction.guild.get_channel(channel_id)
+            channel_id = interaction.guild.get_channel(channel_id)
+            channel: discord.ForumChannel = await interaction.guild.get_channel(
+                channel_id
+            )
             return await interaction.response.send_message(
                 f"Channel has been set to: {channel.mention}", ephemeral=True
             )

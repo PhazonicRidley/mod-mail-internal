@@ -37,3 +37,4 @@ People can edit (with `/topic edit`) and close their own threads as well.
 - Adding tags for topics
 - Reopening old threads
 - Cleaning up the way data is stored in the database
+- CI/CD

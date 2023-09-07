@@ -16,5 +16,6 @@ CREATE TABLE IF NOT EXISTS settings
     guild_id BIGINT PRIMARY KEY,
     output_channel_id BIGINT,
     allowed_role_ids BIGINT[],
-    priority_counting_thread BIGINT
+    priority_counting_thread BIGINT,
+    status_thread_id BIGINT
 );
